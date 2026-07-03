@@ -384,6 +384,7 @@ define([
                                         }
                                         var msg = '<div style="text-align:left;padding:10px 0">'
                                             + '<label style="display:block;margin:8px 0;font-size:13px;cursor:pointer"><input type="checkbox" checked id="epub-opt-toc" style="margin-right:8px"/>Include generated Table of Contents</label>'
+                                            + '<label style="display:block;margin:8px 0;font-size:13px;cursor:pointer"><input type="checkbox" checked id="epub-opt-titlepage" style="margin-right:8px"/>Include title page</label>'
                                             + '<label style="display:block;margin:8px 0;font-size:13px;cursor:pointer"><input type="checkbox" checked id="epub-opt-fonts" style="margin-right:8px"/>Embed fonts</label>'
                                             + '<label style="display:block;margin:8px 0;font-size:13px;cursor:pointer"><input type="checkbox" id="epub-opt-sections" style="margin-right:8px"/>Convert section breaks to page breaks</label>'
                                             + '<label style="display:block;margin:8px 0;font-size:13px;cursor:pointer"><input type="checkbox" id="epub-opt-softreturns" style="margin-right:8px"/>Remove soft returns</label>'
@@ -400,6 +401,8 @@ define([
                                                     var params = [];
                                                     var tocEl = document.getElementById('epub-opt-toc');
                                                     if (tocEl && !tocEl.checked) params.push('toc=0');
+                                                    var titlePageEl = document.getElementById('epub-opt-titlepage');
+                                                    if (titlePageEl && !titlePageEl.checked) params.push('titlepage=0');
                                                     var fontsEl = document.getElementById('epub-opt-fonts');
                                                     if (fontsEl && !fontsEl.checked) params.push('fonts=0');
                                                     var sectionsEl = document.getElementById('epub-opt-sections');
