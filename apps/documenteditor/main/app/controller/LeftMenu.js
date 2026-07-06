@@ -368,9 +368,7 @@ define([
                             var fileId = parts.join('_');
                             if (fileId) {
                                 menu && menu.hide();
-                                // Save and wait for completion before exporting
                                 var self = this;
-                                var proceedWithExport = function() {
                                 // Fetch headings then show export options dialog
                                 fetch('/api/files/' + fileId + '/export/headings', {credentials: 'include'})
                                     .then(function(r) { return r.json(); })
@@ -419,7 +417,23 @@ define([
                                                     }
                                                     if (excluded.length > 0) params.push('exclude=' + excluded.join(','));
                                                     var q = params.length ? '?' + params.join('&') : '';
-                                                    window.location.href = '/api/files/' + fileId + '/export/epub' + q;
+                                                    // Save before downloading, then redirect
+                                                    var doExport = function() {
+                                                        window.location.href = '/api/files/' + fileId + '/export/epub' + q;
+                                                    };
+                                                    if (!self.api.isDocumentModified()) {
+                                                        doExport();
+                                                    } else {
+                                                        self.api.asc_Save();
+                                                        var pollCount = 0;
+                                                        var pollInterval = setInterval(function() {
+                                                            pollCount++;
+                                                            if (!self.api.isDocumentModified() || pollCount > 30) {
+                                                                clearInterval(pollInterval);
+                                                                doExport();
+                                                            }
+                                                        }, 100);
+                                                    }
                                                 }
                                             }
                                         });
@@ -428,22 +442,6 @@ define([
                                         // Fallback: export without options
                                         window.location.href = '/api/files/' + fileId + '/export/epub';
                                     });
-                                }; // end proceedWithExport
-                                // If document is not modified, proceed immediately
-                                if (!self.api.isDocumentModified()) {
-                                    proceedWithExport();
-                                } else {
-                                    // Trigger save, then poll until save completes
-                                    self.api.asc_Save();
-                                    var pollCount = 0;
-                                    var pollInterval = setInterval(function() {
-                                        pollCount++;
-                                        if (!self.api.isDocumentModified() || pollCount > 30) {
-                                            clearInterval(pollInterval);
-                                            proceedWithExport();
-                                        }
-                                    }, 100);
-                                }
                                 return;
                             }
                         }
