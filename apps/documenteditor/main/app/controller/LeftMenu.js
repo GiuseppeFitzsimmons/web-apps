@@ -374,7 +374,7 @@ define([
                                 var pollCount = 0;
                                 var pollInterval = setInterval(function() {
                                     pollCount++;
-                                    if (!self.api.isDocumentModified() || pollCount > 4) {
+                                    if (!self.api.isDocumentModified() || pollCount > 7) {
                                         clearInterval(pollInterval);
                                         // Fetch headings then show export options dialog
                                         fetch('/api/files/' + fileId + '/export/headings', {credentials: 'include'})
