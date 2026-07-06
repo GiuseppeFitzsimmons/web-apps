@@ -369,10 +369,17 @@ define([
                             if (fileId) {
                                 menu && menu.hide();
                                 var self = this;
-                                // Fetch headings then show export options dialog
-                                fetch('/api/files/' + fileId + '/export/headings', {credentials: 'include'})
-                                    .then(function(r) { return r.json(); })
-                                    .then(function(headings) {
+                                // Save first, then open modal
+                                this.api.asc_Save();
+                                var pollCount = 0;
+                                var pollInterval = setInterval(function() {
+                                    pollCount++;
+                                    if (!self.api.isDocumentModified() || pollCount > 4) {
+                                        clearInterval(pollInterval);
+                                        // Fetch headings then show export options dialog
+                                        fetch('/api/files/' + fileId + '/export/headings', {credentials: 'include'})
+                                            .then(function(r) { return r.json(); })
+                                            .then(function(headings) {
                                         var secHtml = '';
                                         if (headings && headings.length > 0) {
                                             secHtml = '<div style="max-height:150px;overflow-y:auto;border:1px solid #eee;border-radius:3px;padding:8px;margin-top:12px">';
@@ -417,23 +424,7 @@ define([
                                                     }
                                                     if (excluded.length > 0) params.push('exclude=' + excluded.join(','));
                                                     var q = params.length ? '?' + params.join('&') : '';
-                                                    // Save before downloading, then redirect
-                                                    var doExport = function() {
-                                                        window.location.href = '/api/files/' + fileId + '/export/epub' + q;
-                                                    };
-                                                    if (!self.api.isDocumentModified()) {
-                                                        doExport();
-                                                    } else {
-                                                        self.api.asc_Save();
-                                                        var pollCount = 0;
-                                                        var pollInterval = setInterval(function() {
-                                                            pollCount++;
-                                                            if (!self.api.isDocumentModified() || pollCount > 30) {
-                                                                clearInterval(pollInterval);
-                                                                doExport();
-                                                            }
-                                                        }, 100);
-                                                    }
+                                                    window.location.href = '/api/files/' + fileId + '/export/epub' + q;
                                                 }
                                             }
                                         });
@@ -442,6 +433,8 @@ define([
                                         // Fallback: export without options
                                         window.location.href = '/api/files/' + fileId + '/export/epub';
                                     });
+                                    }
+                                }, 100);
                                 return;
                             }
                         }
