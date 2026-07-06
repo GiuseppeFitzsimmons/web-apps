@@ -368,11 +368,9 @@ define([
                             var fileId = parts.join('_');
                             if (fileId) {
                                 menu && menu.hide();
-                                // Force save before export so latest changes are included
-                                this.api.asc_Save();
-                                // Brief delay to allow save to flush to server
+                                // Save and wait for completion before exporting
                                 var self = this;
-                                setTimeout(function() {
+                                var proceedWithExport = function() {
                                 // Fetch headings then show export options dialog
                                 fetch('/api/files/' + fileId + '/export/headings', {credentials: 'include'})
                                     .then(function(r) { return r.json(); })
@@ -430,7 +428,22 @@ define([
                                         // Fallback: export without options
                                         window.location.href = '/api/files/' + fileId + '/export/epub';
                                     });
-                                }, 1500); // end setTimeout - wait for save to complete
+                                }; // end proceedWithExport
+                                // If document is not modified, proceed immediately
+                                if (!self.api.isDocumentModified()) {
+                                    proceedWithExport();
+                                } else {
+                                    // Trigger save, then poll until save completes
+                                    self.api.asc_Save();
+                                    var pollCount = 0;
+                                    var pollInterval = setInterval(function() {
+                                        pollCount++;
+                                        if (!self.api.isDocumentModified() || pollCount > 30) {
+                                            clearInterval(pollInterval);
+                                            proceedWithExport();
+                                        }
+                                    }, 100);
+                                }
                                 return;
                             }
                         }
