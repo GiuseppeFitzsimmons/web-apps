@@ -368,6 +368,11 @@ define([
                             var fileId = parts.join('_');
                             if (fileId) {
                                 menu && menu.hide();
+                                // Force save before export so latest changes are included
+                                this.api.asc_Save();
+                                // Brief delay to allow save to flush to server
+                                var self = this;
+                                setTimeout(function() {
                                 // Fetch headings then show export options dialog
                                 fetch('/api/files/' + fileId + '/export/headings', {credentials: 'include'})
                                     .then(function(r) { return r.json(); })
@@ -425,6 +430,7 @@ define([
                                         // Fallback: export without options
                                         window.location.href = '/api/files/' + fileId + '/export/epub';
                                     });
+                                }, 1500); // end setTimeout - wait for save to complete
                                 return;
                             }
                         }
