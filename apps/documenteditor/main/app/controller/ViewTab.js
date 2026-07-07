@@ -90,7 +90,8 @@ define([
                     'macros:pause':  _.bind(this.onClickMacrosPause, this),
                     'pointer:select': _.bind(this.onPointerType, this, 'select'),
                     'pointer:hand': _.bind(this.onPointerType, this, 'hand'),
-                    'pages:multiple': _.bind(this.onMultiplePages, this)
+                    'pages:multiple': _.bind(this.onMultiplePages, this),
+                    'pages:book': _.bind(this.onBookView, this)
                 },
                 'Toolbar': {
                     'view:compact': _.bind(function (toolbar, state) {
@@ -288,6 +289,22 @@ define([
                 this.api.SetMultipageViewMode(pressed);
                 Common.localStorage.setBool("de-zoom-multipage", pressed);
                 this.view.fireEvent('pages:multiplechanged', [pressed]);
+                if (pressed && this.view.btnBookView.pressed) {
+                    this.view.btnBookView.toggle(false, true);
+                    Common.localStorage.setBool("de-zoom-bookview", false);
+                }
+            }
+        },
+
+        onBookView: function (pressed) {
+            if (this.api) {
+                this.api.zoomCustomMode();
+                this.api.SetBookViewMode(pressed);
+                Common.localStorage.setBool("de-zoom-bookview", pressed);
+                if (pressed && this.view.btnMultiplePages.pressed) {
+                    this.view.btnMultiplePages.toggle(false, true);
+                    Common.localStorage.setBool("de-zoom-multipage", false);
+                }
             }
         },
 

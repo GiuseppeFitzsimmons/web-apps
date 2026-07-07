@@ -71,6 +71,9 @@ define([
                 '<div class="elset">' +
                     '<span class="btn-slot text" id="slot-btn-multiple-pages" style="text-align: center;"></span>' +
                 '</div>' +
+                '<div class="elset">' +
+                    '<span class="btn-slot text" id="slot-btn-book-view" style="text-align: center;"></span>' +
+                '</div>' +
             '</div>' +
             '<div class="separator long"></div>' +
             '<div class="group">' +
@@ -153,6 +156,9 @@ define([
                 }, me));
                 me.btnMultiplePages.on('click', _.bind(function (e) {
                     me.fireEvent('pages:multiple', [e.pressed]);
+                }, me));
+                me.btnBookView.on('click', _.bind(function (e) {
+                    me.fireEvent('pages:book', [e.pressed]);
                 }, me));
                 me.btnZoom100.on('click', _.bind(function (e) {
                     me.fireEvent('zoom:100');
@@ -313,6 +319,19 @@ define([
                 });
                 this.lockedControls.push(this.btnMultiplePages);
 
+                this.btnBookView = new Common.UI.Button({
+                    cls: 'btn-toolbar',
+                    iconCls: 'toolbar__icon btn-multiple-pages',
+                    lock: [_set.lostConnect, _set.disableOnStart],
+                    caption: 'Book View',
+                    pressed: Common.localStorage.getBool("de-zoom-bookview", false),
+                    enableToggle: true,
+                    dataHint: '1',
+                    dataHintDirection: 'bottom',
+                    dataHintOffset: 'small',
+                });
+                this.lockedControls.push(this.btnBookView);
+
                 this.btnZoom100 = new Common.UI.Button({
                     cls: 'btn-toolbar',
                     iconCls: 'toolbar__icon btn-zoom-100',
@@ -440,6 +459,7 @@ define([
                 this.btnInterfaceTheme.render($host.find('#slot-btn-interface-theme'));
                 this.btnDarkDocument.render($host.find('#slot-btn-dark-document'));
                 this.btnMultiplePages.render($host.find('#slot-btn-multiple-pages'));
+                this.btnBookView.render($host.find('#slot-btn-book-view'));
                 this.btnZoom100.render($host.find('#slot-btn-zoom-100'));
                 this.chStatusbar.render($host.find('#slot-chk-statusbar'));
                 this.chToolbar.render($host.find('#slot-chk-toolbar'));
