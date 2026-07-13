@@ -359,6 +359,31 @@ define([
                         menu.hide();
                     }
                 } else {
+                    // Intercept PDF/PDFA downloads - use pandoc+xelatex PDF (better Amazon/standards compliance)
+                    if (format == Asc.c_oAscFileType.PDF || format == Asc.c_oAscFileType.PDFA) {
+                        var docKey = this.getApplication().getController('Main').document.key;
+                        if (docKey) {
+                            var parts = docKey.split('_');
+                            parts.pop();
+                            var fileId = parts.join('_');
+                            if (fileId) {
+                                menu && menu.hide();
+                                var self = this;
+                                // Save first, then trigger PDF download
+                                this.api.asc_Save();
+                                var pollCount = 0;
+                                var pollInterval = setInterval(function() {
+                                    pollCount++;
+                                    if (!self.api.isDocumentModified() || pollCount > 7) {
+                                        clearInterval(pollInterval);
+                                        window.location.href = '/api/files/' + fileId + '/export/pdf';
+                                    }
+                                }, 100);
+                                return;
+                            }
+                        }
+                    }
+
                     // Intercept EPUB downloads - use platform's Pandoc-based exporter with options dialog
                     if (format == Asc.c_oAscFileType.EPUB) {
                         var docKey = this.getApplication().getController('Main').document.key;
