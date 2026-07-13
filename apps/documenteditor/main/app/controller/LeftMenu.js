@@ -376,17 +376,13 @@ define([
                                     pollCount++;
                                     if (!self.api.isDocumentModified() || pollCount > 7) {
                                         clearInterval(pollInterval);
-                                        // Show loading spinner
-                                        self.api.asc_setRestriction(Asc.c_oAscRestrictionType.View);
-                                        Common.NotificationCenter.trigger('app:lock', true);
-                                        var loadMask = $('#viewport .asc-loadmask');
-                                        if (!loadMask.length) {
-                                            Common.UI.warning({
-                                                title: '',
-                                                msg: 'Generating PDF...',
-                                                buttons: []
-                                            });
-                                        }
+                                        // Show loading indicator
+                                        Common.UI.warning({
+                                            title: 'PDF Export',
+                                            msg: 'Generating PDF, please wait...',
+                                            buttons: [],
+                                            closable: false
+                                        });
 
                                         fetch('/api/files/' + fileId + '/export/pdf', {credentials: 'include'})
                                             .then(function(resp) {
@@ -401,9 +397,9 @@ define([
                                                 document.body.appendChild(a);
                                                 a.click();
                                                 document.body.removeChild(a);
-                                                URL.revokeObjectURL(url);
+                                                setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
                                             })
-                                            .catch(function(err) {
+                                            .catch(function() {
                                                 Common.UI.warning({
                                                     title: 'Error',
                                                     msg: 'PDF export failed. Please try again.',
@@ -411,15 +407,16 @@ define([
                                                 });
                                             })
                                             .finally(function() {
-                                                Common.UI.warning().close && Common.UI.warning().close();
-                                                self.api.asc_setRestriction(Asc.c_oAscRestrictionType.None);
-                                                Common.NotificationCenter.trigger('app:lock', false);
-                                                // Close any open warning dialogs
-                                                var dlg = document.querySelector('.asc-window.modal.alert');
-                                                if (dlg && dlg.querySelector('.msg') && dlg.querySelector('.msg').textContent === 'Generating PDF...') {
-                                                    var closeBtn = dlg.querySelector('.btn');
-                                                    if (closeBtn) closeBtn.click();
-                                                }
+                                                // Close the "generating" dialog
+                                                var dlgs = document.querySelectorAll('.asc-window.modal');
+                                                dlgs.forEach(function(dlg) {
+                                                    if (dlg.textContent.indexOf('Generating PDF') > -1) {
+                                                        dlg.remove();
+                                                    }
+                                                });
+                                                // Remove backdrop if present
+                                                var masks = document.querySelectorAll('.asc-window-mask');
+                                                masks.forEach(function(m) { m.remove(); });
                                             });
                                     }
                                 }, 100);
