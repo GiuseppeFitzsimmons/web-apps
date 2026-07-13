@@ -377,28 +377,21 @@ define([
                                     if (!self.api.isDocumentModified() || pollCount > 7) {
                                         clearInterval(pollInterval);
 
-                                        fetch('/api/files/' + fileId + '/export/pdf', {credentials: 'include'})
-                                            .then(function(resp) {
-                                                if (!resp.ok) throw new Error('PDF export failed');
-                                                return resp.blob();
-                                            })
-                                            .then(function(blob) {
-                                                var url = URL.createObjectURL(blob);
-                                                var a = document.createElement('a');
-                                                a.href = url;
-                                                a.download = (self.getApplication().getController('Viewport').getView('Common.Views.Header').getDocumentCaption() || 'document').replace(/\.docx$/i, '') + '.pdf';
-                                                document.body.appendChild(a);
-                                                a.click();
-                                                document.body.removeChild(a);
-                                                setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
-                                            })
-                                            .catch(function() {
-                                                Common.UI.warning({
-                                                    title: 'Error',
-                                                    msg: 'PDF export failed. Please try again.',
-                                                    buttons: ['ok']
-                                                });
-                                            });
+                                        // Show the standard loading indicator
+                                        Common.NotificationCenter.trigger('action:start', Asc.c_oAscAsyncActionType.BlockInteraction, -1);
+
+                                        var iframe = document.createElement('iframe');
+                                        iframe.style.display = 'none';
+                                        iframe.src = '/api/files/' + fileId + '/export/pdf';
+                                        iframe.onload = function() {
+                                            Common.NotificationCenter.trigger('action:end', Asc.c_oAscAsyncActionType.BlockInteraction, -1);
+                                            setTimeout(function() { document.body.removeChild(iframe); }, 1000);
+                                        };
+                                        document.body.appendChild(iframe);
+                                        // Fallback: hide indicator after 60s in case onload doesn't fire
+                                        setTimeout(function() {
+                                            Common.NotificationCenter.trigger('action:end', Asc.c_oAscAsyncActionType.BlockInteraction, -1);
+                                        }, 60000);
                                     }
                                 }, 100);
                                 return;
