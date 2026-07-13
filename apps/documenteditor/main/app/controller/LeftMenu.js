@@ -376,7 +376,13 @@ define([
                                     pollCount++;
                                     if (!self.api.isDocumentModified() || pollCount > 7) {
                                         clearInterval(pollInterval);
-                                        window.location.href = '/api/files/' + fileId + '/export/pdf';
+                                        var a = document.createElement('a');
+                                        a.href = '/api/files/' + fileId + '/export/pdf';
+                                        a.download = '';
+                                        a.style.display = 'none';
+                                        document.body.appendChild(a);
+                                        a.click();
+                                        document.body.removeChild(a);
                                     }
                                 }, 100);
                                 return;
