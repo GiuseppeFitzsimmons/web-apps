@@ -376,13 +376,6 @@ define([
                                     pollCount++;
                                     if (!self.api.isDocumentModified() || pollCount > 7) {
                                         clearInterval(pollInterval);
-                                        // Show loading indicator
-                                        Common.UI.warning({
-                                            title: 'PDF Export',
-                                            msg: 'Generating PDF, please wait...',
-                                            buttons: [],
-                                            closable: false
-                                        });
 
                                         fetch('/api/files/' + fileId + '/export/pdf', {credentials: 'include'})
                                             .then(function(resp) {
@@ -405,18 +398,6 @@ define([
                                                     msg: 'PDF export failed. Please try again.',
                                                     buttons: ['ok']
                                                 });
-                                            })
-                                            .finally(function() {
-                                                // Close the "generating" dialog
-                                                var dlgs = document.querySelectorAll('.asc-window.modal');
-                                                dlgs.forEach(function(dlg) {
-                                                    if (dlg.textContent.indexOf('Generating PDF') > -1) {
-                                                        dlg.remove();
-                                                    }
-                                                });
-                                                // Remove backdrop if present
-                                                var masks = document.querySelectorAll('.asc-window-mask');
-                                                masks.forEach(function(m) { m.remove(); });
                                             });
                                     }
                                 }, 100);
