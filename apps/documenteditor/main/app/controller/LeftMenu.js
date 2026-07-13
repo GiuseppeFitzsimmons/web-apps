@@ -376,22 +376,7 @@ define([
                                     pollCount++;
                                     if (!self.api.isDocumentModified() || pollCount > 7) {
                                         clearInterval(pollInterval);
-
-                                        // Show the standard loading indicator
-                                        Common.NotificationCenter.trigger('action:start', Asc.c_oAscAsyncActionType.BlockInteraction, -1);
-
-                                        var iframe = document.createElement('iframe');
-                                        iframe.style.display = 'none';
-                                        iframe.src = '/api/files/' + fileId + '/export/pdf';
-                                        iframe.onload = function() {
-                                            Common.NotificationCenter.trigger('action:end', Asc.c_oAscAsyncActionType.BlockInteraction, -1);
-                                            setTimeout(function() { document.body.removeChild(iframe); }, 1000);
-                                        };
-                                        document.body.appendChild(iframe);
-                                        // Fallback: hide indicator after 60s in case onload doesn't fire
-                                        setTimeout(function() {
-                                            Common.NotificationCenter.trigger('action:end', Asc.c_oAscAsyncActionType.BlockInteraction, -1);
-                                        }, 60000);
+                                        window.location.assign('/api/files/' + fileId + '/export/pdf');
                                     }
                                 }, 100);
                                 return;
