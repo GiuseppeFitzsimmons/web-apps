@@ -376,7 +376,12 @@ define([
                                     pollCount++;
                                     if (!self.api.isDocumentModified() || pollCount > 7) {
                                         clearInterval(pollInterval);
+                                        Common.NotificationCenter.trigger('action:start', Asc.c_oAscAsyncActionType.Information, -1);
                                         window.location.assign('/api/files/' + fileId + '/export/pdf');
+                                        // Hide after a reasonable delay (browser handles download)
+                                        setTimeout(function() {
+                                            Common.NotificationCenter.trigger('action:end', Asc.c_oAscAsyncActionType.Information, -1);
+                                        }, 5000);
                                     }
                                 }, 100);
                                 return;
