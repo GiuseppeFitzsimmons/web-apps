@@ -376,13 +376,51 @@ define([
                                     pollCount++;
                                     if (!self.api.isDocumentModified() || pollCount > 7) {
                                         clearInterval(pollInterval);
-                                        var a = document.createElement('a');
-                                        a.href = '/api/files/' + fileId + '/export/pdf';
-                                        a.download = '';
-                                        a.style.display = 'none';
-                                        document.body.appendChild(a);
-                                        a.click();
-                                        document.body.removeChild(a);
+                                        // Show loading spinner
+                                        self.api.asc_setRestriction(Asc.c_oAscRestrictionType.View);
+                                        Common.NotificationCenter.trigger('app:lock', true);
+                                        var loadMask = $('#viewport .asc-loadmask');
+                                        if (!loadMask.length) {
+                                            Common.UI.warning({
+                                                title: '',
+                                                msg: 'Generating PDF...',
+                                                buttons: []
+                                            });
+                                        }
+
+                                        fetch('/api/files/' + fileId + '/export/pdf', {credentials: 'include'})
+                                            .then(function(resp) {
+                                                if (!resp.ok) throw new Error('PDF export failed');
+                                                return resp.blob();
+                                            })
+                                            .then(function(blob) {
+                                                var url = URL.createObjectURL(blob);
+                                                var a = document.createElement('a');
+                                                a.href = url;
+                                                a.download = (self.getApplication().getController('Viewport').getView('Common.Views.Header').getDocumentCaption() || 'document').replace(/\.docx$/i, '') + '.pdf';
+                                                document.body.appendChild(a);
+                                                a.click();
+                                                document.body.removeChild(a);
+                                                URL.revokeObjectURL(url);
+                                            })
+                                            .catch(function(err) {
+                                                Common.UI.warning({
+                                                    title: 'Error',
+                                                    msg: 'PDF export failed. Please try again.',
+                                                    buttons: ['ok']
+                                                });
+                                            })
+                                            .finally(function() {
+                                                Common.UI.warning().close && Common.UI.warning().close();
+                                                self.api.asc_setRestriction(Asc.c_oAscRestrictionType.None);
+                                                Common.NotificationCenter.trigger('app:lock', false);
+                                                // Close any open warning dialogs
+                                                var dlg = document.querySelector('.asc-window.modal.alert');
+                                                if (dlg && dlg.querySelector('.msg') && dlg.querySelector('.msg').textContent === 'Generating PDF...') {
+                                                    var closeBtn = dlg.querySelector('.btn');
+                                                    if (closeBtn) closeBtn.click();
+                                                }
+                                            });
                                     }
                                 }, 100);
                                 return;
