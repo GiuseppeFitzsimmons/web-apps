@@ -359,38 +359,6 @@ define([
                         menu.hide();
                     }
                 } else {
-                    // Intercept PDF/PDFA downloads - use pandoc+xelatex PDF (better Amazon/standards compliance)
-                    if (format == Asc.c_oAscFileType.PDF || format == Asc.c_oAscFileType.PDFA) {
-                        var docKey = this.getApplication().getController('Main').document.key;
-                        if (docKey) {
-                            var parts = docKey.split('_');
-                            parts.pop();
-                            var fileId = parts.join('_');
-                            if (fileId) {
-                                menu && menu.hide();
-                                var self = this;
-                                // Save first, then trigger PDF download
-                                this.api.asc_Save();
-                                var pollCount = 0;
-                                var pollInterval = setInterval(function() {
-                                    pollCount++;
-                                    if (!self.api.isDocumentModified() || pollCount > 7) {
-                                        clearInterval(pollInterval);
-                                        Common.UI.warning({
-                                            width: 400,
-                                            title: 'PDF Export',
-                                            msg: 'Your PDF is being generated. It will download shortly.',
-                                            buttons: ['ok'],
-                                            callback: function() {}
-                                        });
-                                        window.location.assign('/api/files/' + fileId + '/export/pdf');
-                                    }
-                                }, 100);
-                                return;
-                            }
-                        }
-                    }
-
                     // Intercept EPUB downloads - use platform's Pandoc-based exporter with options dialog
                     if (format == Asc.c_oAscFileType.EPUB) {
                         var docKey = this.getApplication().getController('Main').document.key;
@@ -401,17 +369,10 @@ define([
                             if (fileId) {
                                 menu && menu.hide();
                                 var self = this;
-                                // Save first, then open modal
-                                this.api.asc_Save();
-                                var pollCount = 0;
-                                var pollInterval = setInterval(function() {
-                                    pollCount++;
-                                    if (!self.api.isDocumentModified() || pollCount > 7) {
-                                        clearInterval(pollInterval);
-                                        // Fetch headings then show export options dialog
-                                        fetch('/api/files/' + fileId + '/export/headings', {credentials: 'include'})
-                                            .then(function(r) { return r.json(); })
-                                            .then(function(headings) {
+                                // Fetch headings then show export options dialog
+                                fetch('/api/files/' + fileId + '/export/headings', {credentials: 'include'})
+                                    .then(function(r) { return r.json(); })
+                                    .then(function(headings) {
                                         var secHtml = '';
                                         if (headings && headings.length > 0) {
                                             secHtml = '<div style="max-height:150px;overflow-y:auto;border:1px solid #eee;border-radius:3px;padding:8px;margin-top:12px">';
@@ -465,8 +426,6 @@ define([
                                         // Fallback: export without options
                                         window.location.href = '/api/files/' + fileId + '/export/epub';
                                     });
-                                    }
-                                }, 100);
                                 return;
                             }
                         }
