@@ -359,6 +359,23 @@ define([
                         menu.hide();
                     }
                 } else {
+                    // Intercept PDF/PDFA downloads — let DS generate, then clean via Ghostscript
+                    if (format == Asc.c_oAscFileType.PDF || format == Asc.c_oAscFileType.PDFA) {
+                        var self = this;
+                        var defFileName = this.getApplication().getController('Viewport').getView('Common.Views.Header').getDocumentCaption() || 'document';
+                        var idx = defFileName.lastIndexOf('.');
+                        if (idx > 0) defFileName = defFileName.substring(0, idx) + '.pdf';
+                        else defFileName = defFileName + '.pdf';
+
+                        // Temporarily hijack onDownloadUrl to intercept the DS PDF URL
+                        this._pdfCleanMode = true;
+                        this._pdfFileName = defFileName;
+                        this.isFromFileDownloadAs = ext;
+                        this.api.asc_DownloadAs(options);
+                        menu && menu.hide();
+                        return;
+                    }
+
                     // Intercept EPUB downloads - use platform's Pandoc-based exporter with options dialog
                     if (format == Asc.c_oAscFileType.EPUB) {
                         var docKey = this.getApplication().getController('Main').document.key;
@@ -472,6 +489,42 @@ define([
         },
 
         onDownloadUrl: function(url, fileType) {
+            // Intercept PDF downloads for Ghostscript cleaning
+            if (this._pdfCleanMode) {
+                this._pdfCleanMode = false;
+                this.isFromFileDownloadAs = false;
+                var fileName = this._pdfFileName || 'document.pdf';
+                this._pdfFileName = null;
+
+                // Send the DS PDF URL to our cleaner endpoint
+                fetch('/api/files/clean-pdf', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: url })
+                })
+                .then(function(resp) {
+                    if (!resp.ok) throw new Error('PDF cleaning failed');
+                    return resp.blob();
+                })
+                .then(function(blob) {
+                    var blobUrl = URL.createObjectURL(blob);
+                    var a = document.createElement('a');
+                    a.href = blobUrl;
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 1000);
+                })
+                .catch(function(err) {
+                    console.error('PDF clean failed, falling back to original:', err);
+                    // Fallback: download the original uncleaned PDF
+                    window.location.assign(url);
+                });
+                return;
+            }
+
             if (this.isFromFileDownloadAs) {
                 var me = this,
                     defFileName = this.getApplication().getController('Viewport').getView('Common.Views.Header').getDocumentCaption();
