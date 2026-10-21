@@ -1309,6 +1309,42 @@ define([
                     value;
 
                 me._isDocReady = true;
+
+                // eo-cursor-restore: persist caret position per file in
+                // localStorage and restore it on load. Uses the EOGetCursor /
+                // EOSetCursor sdkjs plugin methods (character-exact).
+                (function() {
+                    var api = me.api;
+                    if (!api || !api["pluginMethod_EOGetCursor"]) return;
+                    var fileKey = (me.document && me.document.key) || me.appOptions.fileKey || "";
+                    var userId = (me.appOptions && me.appOptions.user && me.appOptions.user.id) || "anon";
+                    // Derive a stable per-document key: strip the trailing
+                    // revision token DS appends to document.key (id_timestamp).
+                    var baseId = String(fileKey).split("_").slice(0, -1).join("_") || String(fileKey);
+                    var storeKey = "eo:cursor:" + baseId + ":" + userId;
+                    // Restore (after a short settle so content is laid out).
+                    setTimeout(function() {
+                        try {
+                            var raw = window.localStorage.getItem(storeKey);
+                            if (!raw) return;
+                            var path = JSON.parse(raw);
+                            if (path && path.length) api["pluginMethod_EOSetCursor"](path);
+                        } catch (e) {}
+                    }, 800);
+                    // Save (debounced) on caret move / selection end.
+                    var saveTimer = null;
+                    var save = function() {
+                        if (saveTimer) clearTimeout(saveTimer);
+                        saveTimer = setTimeout(function() {
+                            try {
+                                var path = api["pluginMethod_EOGetCursor"]();
+                                if (path && path.length) window.localStorage.setItem(storeKey, JSON.stringify(path));
+                            } catch (e) {}
+                        }, 1000);
+                    };
+                    api.asc_registerCallback("asc_onCursorMove", save);
+                    api.asc_registerCallback("asc_onSelectionEnd", save);
+                })();
                 Common.NotificationCenter.trigger('app:ready', this.appOptions);
 
                 me.api.SetDrawingFreeze(false);
@@ -2702,6 +2738,10 @@ define([
             },
 
             onServerVersion: function(buildVersion) {
+                // eo-no-version-check: we build & serve our own DS, so the
+                // editor/server build-version handshake is meaningless and was
+                // causing a reload loop. Skip it.
+                return false;
                 if (this.changeServerVersion) return true;
 
                 const cur_version = this.getApplication().getController('LeftMenu').leftMenu.getMenu('about').txtVersionNum;
