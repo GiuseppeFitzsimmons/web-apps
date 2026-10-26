@@ -967,6 +967,10 @@ define([
                 if ( role == 'left' && (!config || !config.isDesktopApp)) {
                     $html = $(templateLeftBox);
                     this.logo = $html.find('#header-logo');
+                    // eo-hide-logo: force-hide the ONLYOFFICE header logo regardless of
+                    // the license canBranding gate (setBranding is only called when the
+                    // server reports canBranding; our from-source build does not).
+                    this.logo && this.logo.addClass('hidden');
                     var logo = this.getSuitableLogo(this.branding, config);
                     this.logo.toggleClass('logo-light', logo.isLight);
                     if (this.branding && this.branding.logo && this.logo) {
