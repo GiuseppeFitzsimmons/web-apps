@@ -105,6 +105,7 @@ define([
                 toggleGroup: 'leftMenuGroup'
             });
             this.btnAbout.on('toggle',          this.onBtnMenuToggle.bind(this));
+            this.btnAbout.$el && this.btnAbout.$el.hide(); // eo-hide-about: don't render the left-panel About button
 
             this.btnSupport = new Common.UI.Button({
                 action: 'support',

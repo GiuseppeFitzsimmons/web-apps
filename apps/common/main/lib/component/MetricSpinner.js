@@ -534,7 +534,7 @@ define([
         },
 
         _add: function (a, b, precision) {
-            var x = Math.pow(10, precision || (this.options.allowDecimal) ? 2 : 0);
+            var x = Math.pow(10, precision || ((this.options.allowDecimal) ? 2 : 0)); // eo-add-precision-fix: honor passed precision
             return (Math.round(a * x) + Math.round(b * x)) / x;
         },
 

@@ -2526,8 +2526,48 @@ define([
                     }, this);
                 }
 
-                if (!Common.Utils.ModalWindow.isVisible() || $('.asc-window.modal.alert[data-value="' + id + '"]').length<1)
-                    Common.UI.alert(config).$window.attr('data-value', id);
+                var _showAlert = function() {
+                    if (!Common.Utils.ModalWindow.isVisible() || $('.asc-window.modal.alert[data-value="' + id + '"]').length<1)
+                        Common.UI.alert(config).$window.attr('data-value', id);
+                };
+
+                // eo-quota-saveerror: the platform rejects a save that would
+                // exceed the user's storage quota by returning an error on the
+                // document callback. DS surfaces that to the editor as a generic
+                // "Warning" (errorConnectToServer) or ConvertationSaveError — DS
+                // has no concept of quotas, so it can't say WHY. The real reason
+                // is recorded by the platform at /api/ds/callback/save-status.
+                // For these save-failure errors we ask the platform; if it was a
+                // quota rejection we replace the generic text with a storage-full
+                // message + upgrade link. The reason may not be recorded the
+                // instant onError fires, so we poll a few times.
+                if (id == Asc.c_oAscError.ID.Warning || id == Asc.c_oAscError.ID.ConvertationSaveError
+                        || id == Asc.c_oAscError.ID.ForceSaveButton || id == Asc.c_oAscError.ID.ForceSaveTimeout) {
+                    var _fileKey = (this.document && this.document.key) || '';
+                    var _baseId = String(_fileKey).split('_').slice(0, -1).join('_') || String(_fileKey);
+                    var _tries = 0;
+                    var _lookup = function() {
+                        _tries++;
+                        fetch('/api/ds/callback/save-status?fileId=' + encodeURIComponent(_baseId) + '&_=' + Date.now(), {credentials: 'include'})
+                            .then(function(r) { return r.json(); })
+                            .then(function(d) {
+                                if (d && d.status === 'quota_exceeded') {
+                                    var fmt = function(b){ return b>=1048576 ? (b/1048576).toFixed(1)+' MB' : (b/1024).toFixed(0)+' KB'; };
+                                    config.msg = 'Saving would exceed your ' + fmt(d.limit) + ' storage limit. Free up space, or upgrade for more storage at https://payhip.com/eurobureau.';
+                                    config.title = 'Storage full';
+                                    _showAlert();
+                                } else if (_tries < 3) {
+                                    setTimeout(_lookup, 500); // reason not recorded yet; retry briefly
+                                } else {
+                                    _showAlert(); // not a quota rejection — show the original message
+                                }
+                            })
+                            .catch(function(){ _showAlert(); });
+                    };
+                    _lookup();
+                    return;
+                }
+                _showAlert();
             },
 
             onCoAuthoringDisconnect: function() {

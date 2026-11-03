@@ -1036,7 +1036,11 @@ define([
                 for (var i=0; i<this.spinners.length; i++) {
                     var spinner = this.spinners[i];
                     spinner.setDefaultUnit(Common.Utils.Metric.getCurrentMetricName());
-                    if (spinner.el.id == 'paragraphadv-spin-spacing' || spinner.el.id == 'paragraphadv-spin-position' || spinner.el.id == 'paragraphadv-spin-spacing-before' || spinner.el.id == 'paragraphadv-spin-spacing-after')
+                    if (spinner.el.id == 'paragraphadv-spin-spacing') { // eo-kerning-fine: near-1-twip character-spacing arrow step per unit (orphan control)
+                        var _m = Common.Utils.Metric.getCurrentMetric(), _mu = Common.Utils.Metric.c_MetricUnits;
+                        spinner.setStep(_m==_mu.pt ? 0.05 : (_m==_mu.inch ? 0.001 : 0.002));
+                    }
+                    else if (spinner.el.id == 'paragraphadv-spin-position' || spinner.el.id == 'paragraphadv-spin-spacing-before' || spinner.el.id == 'paragraphadv-spin-spacing-after')
                         spinner.setStep(Common.Utils.Metric.getCurrentMetric()==Common.Utils.Metric.c_MetricUnits.pt ? 1 : 0.01);
                     else
                         spinner.setStep(Common.Utils.Metric.getCurrentMetric()==Common.Utils.Metric.c_MetricUnits.pt ? 1 : 0.1);

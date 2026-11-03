@@ -2607,6 +2607,10 @@ define([
             },
 
             onServerVersion: function(buildVersion) {
+                // eo-no-version-check: we build & serve our own DS, so the
+                // editor/server build-version handshake is meaningless and was
+                // causing a reload loop. Skip it. (Same fix as documenteditor.)
+                return false;
                 if (this.changeServerVersion) return true;
 
                 const cur_version = this.getApplication().getController('LeftMenu').leftMenu.getMenu('about').txtVersionNum;
