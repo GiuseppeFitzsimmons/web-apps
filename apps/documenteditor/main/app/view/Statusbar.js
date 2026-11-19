@@ -72,6 +72,7 @@ define([
             var me = this;
             me.btnZoomToPage.updateHint(me.tipFitPage);
             me.btnMultiplePages.updateHint(me.tipMultiplePages);
+            me.btnBookView.updateHint(me.tipBookView);
             me.btnZoomToWidth.updateHint(me.tipFitWidth);
             DE.getController('Common.Controllers.Shortcuts').updateShortcutHints({
                 ZoomOut: {
@@ -166,6 +167,11 @@ define([
                 me.fireEvent('zoom:value', [item.value]);
             });
 
+            // eo-book-view
+            me.btnBookView.on('click', function (btn) {
+                me.fireEvent('pages:book', [btn.pressed]);
+            });
+
             me.btnMultiplePages.on('click', function (btn) {
                 Common.UI.TooltipManager.closeTip('multipageViewStatusbar');
                 me.fireEvent('pages:multiple', [btn.pressed])
@@ -224,6 +230,13 @@ define([
                     hintAnchor: 'top',
                     toggleGroup: 'multiple-pages',
                     pressed: Common.localStorage.getBool("de-zoom-multipage", false),
+                    enableToggle: true
+                });
+
+                // eo-book-view: two-page book spreads (same icon as multiple pages for now).
+                this.btnBookView = new Common.UI.Button({
+                    hintAnchor: 'top',
+                    pressed: Common.localStorage.getBool("de-zoom-bookview", false),
                     enableToggle: true
                 });
 
@@ -363,6 +376,7 @@ define([
                 this.fireEvent('render:before', [this.$layout]);
 
                 _btn_render(me.btnMultiplePages, $('#status-btn-multiple-pages', me.$layout));
+                _btn_render(me.btnBookView, $('#status-btn-book-view', me.$layout));
                 _btn_render(me.btnZoomToPage, $('#btn-zoom-topage', me.$layout));
                 _btn_render(me.btnZoomToWidth, $('#btn-zoom-towidth', me.$layout));
                 _btn_render(me.cntZoom, $('.cnt-zoom',me.$layout));
@@ -563,7 +577,8 @@ define([
             txtWords: 'Words',
             txtParagraphs: 'Paragraphs',
             txtSymbols: 'Symbols',
-            txtSpaces: 'Symbols with spaces'
+            txtSpaces: 'Symbols with spaces',
+            tipBookView: 'Book view (two-page spreads)'
         }, DE.Views.Statusbar || {}));
     }
 );

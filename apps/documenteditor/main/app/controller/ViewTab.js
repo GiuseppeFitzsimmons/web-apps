@@ -100,7 +100,8 @@ define([
                     'macros:pause':  _.bind(this.onClickMacrosPause, this),
                     'pointer:select': _.bind(this.onPointerType, this, 'select'),
                     'pointer:hand': _.bind(this.onPointerType, this, 'hand'),
-                    'pages:multiple': _.bind(this.onMultiplePages, this)
+                    'pages:multiple': _.bind(this.onMultiplePages, this),
+                    'pages:book': _.bind(this.onBookView, this)
                 },
                 'Toolbar': {
                     'view:compact': _.bind(function (toolbar, state) {
@@ -116,6 +117,12 @@ define([
                         this.api.SetMultipageViewMode(isMultiple);
                         Common.localStorage.setBool("de-zoom-multipage", isMultiple);
                         this.view.btnMultiplePages.toggle(isMultiple);
+                        // eo-book-view: multiple pages from the statusbar also cancels book view.
+                        if (isMultiple) this.setBookViewState(false);
+                    }, this),
+                    // eo-book-view: book view toggled from the statusbar button.
+                    'pages:bookchanged': _.bind(function (isBook) {
+                        this.onBookView(isBook);
                     }, this)
                 },
                 'LeftMenu': {
@@ -303,10 +310,37 @@ define([
 
         onMultiplePages: function (pressed) {
             if (this.api) {
+                // eo-book-view: the two layouts are mutually exclusive.
+                if (pressed) this.setBookViewState(false);
                 this.api.zoomCustomMode();
                 this.api.SetMultipageViewMode(pressed);
                 Common.localStorage.setBool("de-zoom-multipage", pressed);
                 this.view.fireEvent('pages:multiplechanged', [pressed]);
+            }
+        },
+
+        // eo-book-view: two-page book spreads, first page alone on the right.
+        onBookView: function (pressed) {
+            if (!this.api) return;
+            if (pressed && this.view.btnMultiplePages.pressed) {
+                // Switch the multiple-pages UI off (toolbar + statusbar) without
+                // its API call clobbering the book mode we set below.
+                Common.localStorage.setBool("de-zoom-multipage", false);
+                this.view.btnMultiplePages.toggle(false, true);
+                this.view.fireEvent('pages:multiplechanged', [false]);
+            }
+            this.api.zoomCustomMode();
+            this.api.SetBookViewMode(pressed);
+            this.setBookViewState(pressed);
+        },
+
+        // Book view state + both buttons (toolbar + statusbar), without touching
+        // the API mode; callers set the mode they want themselves.
+        setBookViewState: function (on) {
+            Common.localStorage.setBool("de-zoom-bookview", on);
+            if (this.view && this.view.btnBookView) {
+                this.view.btnBookView.toggle(on, true);
+                this.view.fireEvent('pages:bookchanged', [on]);
             }
         },
 
@@ -322,6 +356,11 @@ define([
                 this.api.SetMultipageViewMode(false);
                 this.view.btnMultiplePages.toggle(false);
             };
+            // eo-book-view: fit-to-page / fit-to-width leave book view, as they do multiple pages.
+            if ((type === 1 || type === 2) && this.view.btnBookView && this.view.btnBookView.pressed) {
+                this.api.SetBookViewMode(false);
+                this.setBookViewState(false);
+            }
 
             this.setZoomValue(percent);
 

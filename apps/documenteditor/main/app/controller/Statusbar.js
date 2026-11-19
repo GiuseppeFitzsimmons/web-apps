@@ -64,12 +64,20 @@ define([
                         this.api.zoom(value);
                         Common.NotificationCenter.trigger('edit:complete', this.statusbar);
                     }.bind(this),
-                    'pages:multiple': _.bind(me.onMultiplePages, me)
+                    'pages:multiple': _.bind(me.onMultiplePages, me),
+                    // eo-book-view: the ViewTab controller owns the API call.
+                    'pages:book': _.bind(function (pressed) {
+                        this.statusbar.fireEvent('pages:bookchanged', [pressed]);
+                    }, me)
                 },
                 'ViewTab': {
                     'statusbar:hide': _.bind(me.onChangeCompactView, me),
                     'pages:multiplechanged': _.bind(function (isMultiple) {
                         this.statusbar.btnMultiplePages.toggle(isMultiple);
+                    }, this),
+                    // eo-book-view: keep the statusbar button in sync.
+                    'pages:bookchanged': _.bind(function (isBook) {
+                        this.statusbar.btnBookView && this.statusbar.btnBookView.toggle(isBook, true);
                     }, this)
                 }
             });
@@ -263,6 +271,10 @@ define([
                 this.api.SetMultipageViewMode(false);
                 this.statusbar.btnMultiplePages.toggle(false);
             }
+            // eo-book-view: fit-to-page/width leaves book view (ViewTab controller
+            // turns the mode off; this just mirrors the button).
+            if ((type === 1 || type === 2) && this.statusbar.btnBookView)
+                this.statusbar.btnBookView.toggle(false, true);
             $('.statusbar #label-zoom').text(Common.Utils.String.format(this.zoomText, percent));
             if (!this._isDocReady) return;
             var value = type == 2 ? -1 : (type == 1 ? -2 : percent);

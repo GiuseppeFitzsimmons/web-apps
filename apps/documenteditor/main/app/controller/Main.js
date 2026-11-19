@@ -1389,6 +1389,10 @@ define([
                 if (Common.localStorage.getBool("de-zoom-multipage", false)) {
                     this.api.zoomCustomMode();
                     this.api.SetMultipageViewMode(true);
+                } else if (Common.localStorage.getBool("de-zoom-bookview", false) && this.api.SetBookViewMode) {
+                    // eo-book-view: restore the last-used book view on load.
+                    this.api.zoomCustomMode();
+                    this.api.SetBookViewMode(true);
                 }
 
                 value = Common.localStorage.getItem("de-show-hiddenchars");

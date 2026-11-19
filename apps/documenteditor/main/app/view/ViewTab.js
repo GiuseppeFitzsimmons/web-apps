@@ -85,6 +85,14 @@ define([
                     '<span class="btn-slot text" id="slot-btn-multiple-pages" style="text-align: center;"></span>' +
                 '</div>' +
             '</div>' +
+            // eo-book-view: own (4th) column, button in the top row, so the
+            // existing two-row groups keep their layout.
+            '<div class="group small">' +
+                '<div class="elset">' +
+                    '<span class="btn-slot text" id="slot-btn-book-view" style="text-align: center;"></span>' +
+                '</div>' +
+                '<div class="elset"></div>' +
+            '</div>' +
             '<div class="separator long"></div>' +
             '<div class="group">' +
                 '<span class="btn-slot text x-huge" id="slot-btn-interface-theme"></span>' +
@@ -166,6 +174,10 @@ define([
                 }, me));
                 me.btnMultiplePages.on('click', _.bind(function (e) {
                     me.fireEvent('pages:multiple', [e.pressed]);
+                }, me));
+                // eo-book-view
+                me.btnBookView.on('click', _.bind(function (e) {
+                    me.fireEvent('pages:book', [e.pressed]);
                 }, me));
                 me.btnZoom100.on('click', _.bind(function (e) {
                     me.fireEvent('zoom:100');
@@ -325,6 +337,21 @@ define([
                 });
                 this.lockedControls.push(this.btnMultiplePages);
 
+                // eo-book-view: two-page book spreads (first page on the right).
+                // Reuses the multiple-pages icon; mutually exclusive with it.
+                this.btnBookView = new Common.UI.Button({
+                    cls: 'btn-toolbar',
+                    iconCls: 'toolbar__icon btn-book-view',
+                    lock: [_set.lostConnect, _set.disableOnStart],
+                    caption: this.textBookView,
+                    pressed: Common.localStorage.getBool("de-zoom-bookview", false),
+                    enableToggle: true,
+                    dataHint: '1',
+                    dataHintDirection: 'bottom',
+                    dataHintOffset: 'small',
+                });
+                this.lockedControls.push(this.btnBookView);
+
                 this.btnZoom100 = new Common.UI.Button({
                     cls: 'btn-toolbar',
                     iconCls: 'toolbar__icon btn-zoom-100',
@@ -452,6 +479,7 @@ define([
                 this.btnInterfaceTheme.render($host.find('#slot-btn-interface-theme'));
                 this.btnDarkDocument.render($host.find('#slot-btn-dark-document'));
                 this.btnMultiplePages.render($host.find('#slot-btn-multiple-pages'));
+                this.btnBookView.render($host.find('#slot-btn-book-view'));
                 this.btnZoom100.render($host.find('#slot-btn-zoom-100'));
                 this.chStatusbar.render($host.find('#slot-chk-statusbar'));
                 this.chToolbar.render($host.find('#slot-chk-toolbar'));
@@ -488,6 +516,7 @@ define([
                 this.btnInterfaceTheme.updateHint(this.tipInterfaceTheme);
                 this.btnDarkDocument.updateHint(this.tipDarkDocument);
                 this.btnMultiplePages.updateHint(this.tipMultiplePages);
+                this.btnBookView.updateHint(this.tipBookView);
                 this.btnZoom100.updateHint(this.tipZoom100);
                 this.btnsFitToPage.forEach(function (btn) {
                     btn.updateHint(me.tipFitToPage);
@@ -568,7 +597,9 @@ define([
             textFill: 'Fill',
             textLine: 'Line',
             textMacros: 'Macros',
-            tipMacros: 'Macros'
+            tipMacros: 'Macros',
+            textBookView: 'Book View',
+            tipBookView: 'Book view (two-page spreads)'
         }
     }()), DE.Views.ViewTab || {}));
 });
